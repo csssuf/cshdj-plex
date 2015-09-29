@@ -25,7 +25,7 @@ function build_headers() {
         "X-Plex-Platform" : "CSH DJ",
         "X-Plex-Platform-Version" : "0.1.0",
         "X-Plex-Provides" : "player",
-        "X-Plex-Client-Identifier" : config.auth.plex_client_id || uuid();
+        "X-Plex-Client-Identifier" : config.auth.plex_client_id || uuid(),
         "X-Plex-Product" : "CSH DJ",
         "X-Plex-Version" : "0.1.0",
         "X-Plex-Device" : "CSH DJ",
