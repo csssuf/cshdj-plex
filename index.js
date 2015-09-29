@@ -16,7 +16,7 @@ var fs = require("fs");
 var request = require("request");
 var uuid = require("uuid4");
 
-var log, _auth_token;
+var log, _auth_token, config;
 
 exports.display_name = "Plex";
 
@@ -33,9 +33,10 @@ function build_headers() {
     };
 }
 
-exports.init = function(_log, config) {
+exports.init = function(_log, _config) {
     var deferred = Q.defer();
     log = _log;
+    config = _config
 
     if(!config.auth) {
         deferred.reject(new Error("Please configure auth settings for Plex."));
