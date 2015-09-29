@@ -52,7 +52,7 @@ exports.init = function(_log, config) {
         }
         request(req_opts, function(err, response, body) {
             if(err) {
-                deferred.reject(err);
+                deferred.reject(new Error(err));
                 return;
             }
 
