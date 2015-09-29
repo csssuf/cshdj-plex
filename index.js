@@ -15,13 +15,14 @@ var PlexAPI = require("plex-api");
 var fs = require("fs");
 var request = require("request");
 var uuid = require("uuid4");
+var parseXMLString = require("xml2js").parseString;
 
-var log, _auth_token, config;
+var log, _auth_token, config, server_list;
 
 exports.display_name = "Plex";
 
 function build_headers() {
-    return {
+    out = {
         "X-Plex-Platform" : "CSH DJ",
         "X-Plex-Platform-Version" : "0.1.0",
         "X-Plex-Provides" : "player",
@@ -30,6 +31,18 @@ function build_headers() {
         "X-Plex-Version" : "0.1.0",
         "X-Plex-Device" : "CSH DJ",
         "X-Plex-Device-Name" : "CSH DJ"
+    };
+    if(_auth_token) {
+        out["X-Plex-Token"] = _auth_token;
+    }
+    return out;
+}
+
+function build_request(_url, _headers, _method) {
+    return {
+        url: _url,
+        headers: _headers,
+        method: _method
     };
 }
 
@@ -45,22 +58,56 @@ exports.init = function(_log, _config) {
     } else if(!config.auth.plex_password) {
         deferred.reject(new Error("Please configure Plex password."));
     } else {
-        var plex_headers = build_headers();
-        var req_opts = {
-            url : "https://plex.tv/users/sign_in.json",
-            headers : plex_headers,
-            method: "POST"
-        }
-        request(req_opts, function(err, response, body) {
+        var auth_request = build_request(
+            "https://plex.tv/users/sign_in.json",
+            build_headers(),
+            "POST"
+        );
+        request(auth_request, function(err, response, body) {
             if(err) {
-                deferred.reject(new Error(err));
+                deferred.reject(err);
                 return;
             }
-
             _auth_token = JSON.parse(body)["user"]["authentication_token"]
             log(_auth_token);
         }).auth(config.auth.plex_username, config.auth.plex_password, true);
+        var servers_request = build_request(
+            "https://plex.tv/pms/servers.xml",
+            build_headers(),
+            "GET"
+        );
+        request(servers_request, function(err, response, body) {
+            if(err) {
+                deferred.reject(err);
+                return;
+            }
+            parseXMLString(body, function(err, result) {
+                if(err) {
+                    deferred.reject(err);
+                    return;
+                }
+                result['MediaContainer']['Server'].forEach(
+                    function(currentValue, index, array) {
+                        plexConstructor = {
+                            hostname : currentValue['$']['address'],
+                            port : currentValue['$']['port'],
+                            username : config.auth.plex_username,
+                            password : config.auth.plex_password,
+                            token : _auth_token,
+                            options: {
+                                identifier: config.auth.plex_client_id,
+                                product: "CSH DJ Plex Plugin",
+                                version: "0.1.0",
+                                deviceName: "CSH DJ"
+                            }
+                        };
+                        server_list.push(new PlexAPI(plexConstructor));
+                });
+                deferred.resolve();
+            });
+        });
     }
+    return deferred.promise;
 }
 
 exports.search = function(max_results, query) { return []; }
