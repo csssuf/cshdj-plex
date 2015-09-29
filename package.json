@@ -1,0 +1,21 @@
+{
+    "name": "cshdj-plex",
+    "version": "0.1.0",
+    "description": "A Plex plugin for CSH DJ",
+    "main": "index.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/csssuf/cshdj-plex"
+    },
+    "dependencies": {
+        "q": "1.4.1",
+        "plex-api": "3.2.0",
+        "request": "2.64.0"
+    },
+    "author": "James Forcier",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/csssuf/cshdj-plex/issues"
+    },
+    "homepage" : "https://github.com/csssuf/cshdj-plex"
+}
