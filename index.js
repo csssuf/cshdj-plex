@@ -62,6 +62,6 @@ exports.init = function(_log, config) {
     }
 }
 
-exports.init = function(max_results, query) { return []; }
+exports.search = function(max_results, query) { return []; }
 
 exports.fetch = function(id, download_location) { return; }
