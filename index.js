@@ -17,7 +17,7 @@ var request = require("request");
 var uuid = require("uuid4");
 var parseXMLString = require("xml2js").parseString;
 
-var log, _auth_token, config, server_list;
+var log, _auth_token, config, server_list = [];
 
 exports.display_name = "Plex";
 
@@ -69,43 +69,42 @@ exports.init = function(_log, _config) {
                 return;
             }
             _auth_token = JSON.parse(body)["user"]["authentication_token"]
-            log(_auth_token);
-        }).auth(config.auth.plex_username, config.auth.plex_password, true);
-        var servers_request = build_request(
-            "https://plex.tv/pms/servers.xml",
-            build_headers(),
-            "GET"
-        );
-        request(servers_request, function(err, response, body) {
-            if(err) {
-                deferred.reject(err);
-                return;
-            }
-            parseXMLString(body, function(err, result) {
+            var servers_request = build_request(
+                "https://plex.tv/pms/servers.xml",
+                build_headers(),
+                "GET"
+            );
+            request(servers_request, function(err, response, body) {
                 if(err) {
                     deferred.reject(err);
                     return;
                 }
-                result['MediaContainer']['Server'].forEach(
-                    function(currentValue, index, array) {
-                        plexConstructor = {
-                            hostname : currentValue['$']['address'],
-                            port : currentValue['$']['port'],
-                            username : config.auth.plex_username,
-                            password : config.auth.plex_password,
-                            token : _auth_token,
-                            options: {
-                                identifier: config.auth.plex_client_id,
-                                product: "CSH DJ Plex Plugin",
-                                version: "0.1.0",
-                                deviceName: "CSH DJ"
-                            }
-                        };
-                        server_list.push(new PlexAPI(plexConstructor));
+                parseXMLString(body, function(err, result) {
+                    if(err) {
+                        deferred.reject(err);
+                        return;
+                    }
+                    result['MediaContainer']['Server'].forEach(
+                        function(currentValue, index, array) {
+                            plexConstructor = {
+                                hostname : currentValue['$']['address'],
+                                port : currentValue['$']['port'],
+                                username : config.auth.plex_username,
+                                password : config.auth.plex_password,
+                                token : _auth_token,
+                                options: {
+                                    identifier: config.auth.plex_client_id,
+                                    product: "CSH DJ Plex Plugin",
+                                    version: "0.1.0",
+                                    deviceName: "CSH DJ"
+                                }
+                            };
+                            server_list.push(new PlexAPI(plexConstructor));
+                    });
+                    deferred.resolve();
                 });
-                deferred.resolve();
             });
-        });
+        }).auth(config.auth.plex_username, config.auth.plex_password, true);
     }
     return deferred.promise;
 }
