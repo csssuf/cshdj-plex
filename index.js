@@ -47,13 +47,15 @@ function build_request(_url, _headers, _method) {
     };
 }
 
-function format_result(result) {
-    return {
-        id : _currentIndex + "/" + result["ratingKey"],
-        title : result["title"],
-        artist : result["grandparentTitle"],
-        thumbnail_url : _currentBase + result["thumb"],
-        image_url : _currentBase + result["thumb"]
+function format_result(index, base) {
+    return function(result){
+        return {
+            id : index + "/" + result["ratingKey"],
+            title : result["title"],
+            artist : result["grandparentTitle"],
+            thumbnail_url : base + result["thumb"]
+            //image_url : base + result["thumb"]
+        };
     };
 }
 
@@ -125,13 +127,14 @@ exports.search = function(max_results, query) {
         _currentIndex = index;
         currentValue.find("/library/sections", {type : "artist"}).then(
             function(directories) {
-                directories.forEach(function(_currentValue, index, array) {
+                directories.forEach(function(_currentValue, _index, array) {
                     currentValue.find(
                         _currentValue["uri"] + "/search?type=10&query=" + 
                         query).then(
                             function(dirs) {
                                 deferred.resolve(dirs.slice(0, max_results)
-                                                     .map(format_result));
+                                                     .map(format_result(index,
+                                                             currentValue)));
                             },
                             function(err) {
                                 deferred.reject(err);
@@ -145,4 +148,51 @@ exports.search = function(max_results, query) {
     return deferred.promise;
 }
 
-exports.fetch = function(id, download_location) { return; }
+exports.fetch = function(id, download_location) {
+    var deferred = Q.defer();
+    var util = require("util");
+    server = server_list[id.split("/")[0]];
+    song_id = id.split("/")[1];
+    log("server: " + util.inspect(server));
+    log("song_id: " + song_id);
+    server.find("/library/metadata/" + song_id).then(
+        function(directories) {
+            // I'm so sorry
+            var song_path = directories[0]["_children"][0]["_children"][0]["key"];
+            log(song_path);
+            var download_path = download_location + song_path.split("/")
+                                                             .slice(-1);
+            log(download_path);
+            var write_stream = fs.createWriteStream(download_path);
+            //var request_opts = {
+            //    uri : "https://" + server["host"] + ":" + server["port"] + "/" + song_path,
+            //    headers: build_headers(),
+            //    method: "GET",
+            //    encoding: null
+            //};
+            //request(request_opts, function(err, msg, songdata) {
+            //    if(err) {
+            //        deferred.reject(err);
+            //        return;
+            //    }
+
+            //    ws.write(songdata);
+            //    deferred.resolve(download_path);
+            //});
+            server.query(song_path).then(
+                function(result) {
+                    write_stream.write(result);
+                    deferred.resolve(download_path);
+                },
+                function(err) {
+                    deferred.reject(err);
+                }
+            );
+        },
+        function(err) {
+            deferred.reject(err);
+        }
+    );
+
+    return deferred.promise;
+}
