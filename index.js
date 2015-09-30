@@ -17,7 +17,7 @@ var request = require("request");
 var uuid = require("uuid4");
 var parseXMLString = require("xml2js").parseString;
 
-var log, _auth_token, config, server_list = [];
+var log, _auth_token, config, server_list = [], _currentBase;
 
 exports.display_name = "Plex";
 
@@ -43,6 +43,16 @@ function build_request(_url, _headers, _method) {
         url: _url,
         headers: _headers,
         method: _method
+    };
+}
+
+function format_result(result) {
+    return {
+        id : result["ratingKey"],
+        title : result["title"],
+        artist : result["grandparentTitle"],
+        thumbnail_url : _currentBase + result["thumb"],
+        image_url : _currentBase + result["thumb"]
     };
 }
 
@@ -109,6 +119,31 @@ exports.init = function(_log, _config) {
     return deferred.promise;
 }
 
-exports.search = function(max_results, query) { return []; }
+exports.search = function(max_results, query) {
+    var deferred = Q.defer();
+    server_list.forEach(function(currentValue, index, array) {
+        _currentBase = currentValue["hostname"] + ":" + currentValue["port"]
+        currentValue.find("/library/sections", {type : "artist"}).then(
+            function(directories) {
+                directories.forEach(function(_currentValue, index, array) {
+                    currentValue.find(
+                        _currentValue["uri"] + "/search?type=10&query=" + 
+                        query).then(
+                            function(dirs) {
+                                deferred.resolve(dirs.slice(0, max_results)
+                                                     .map(format_result));
+                            },
+                            function(err) {
+                                deferred.reject(err);
+                            }
+                        );
+                });
+            },
+            function(err) {
+                deferred.reject(err);
+            }
+        );
+    });
+}
 
 exports.fetch = function(id, download_location) { return; }
