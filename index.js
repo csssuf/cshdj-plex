@@ -99,8 +99,6 @@ exports.init = function(_log, _config) {
                             plexConstructor = {
                                 hostname : currentValue['$']['address'],
                                 port : currentValue['$']['port'],
-                                username : config.auth.plex_username,
-                                password : config.auth.plex_password,
                                 token : _auth_token,
                                 options: {
                                     identifier: config.auth.plex_client_id,
@@ -139,11 +137,10 @@ exports.search = function(max_results, query) {
                         );
                 });
             },
-            function(err) {
-                deferred.reject(err);
-            }
+            function(err) {}
         );
     });
+    return deferred.promise;
 }
 
 exports.fetch = function(id, download_location) { return; }
