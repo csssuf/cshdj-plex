@@ -17,7 +17,7 @@ var request = require("request");
 var uuid = require("uuid4");
 var parseXMLString = require("xml2js").parseString;
 
-var log, _auth_token, config, server_list = [], _currentBase;
+var log, _auth_token, config, server_list = [], _currentBase, _currentIndex;
 
 exports.display_name = "Plex";
 
@@ -48,7 +48,7 @@ function build_request(_url, _headers, _method) {
 
 function format_result(result) {
     return {
-        id : result["ratingKey"],
+        id : _currentIndex + "/" result["ratingKey"],
         title : result["title"],
         artist : result["grandparentTitle"],
         thumbnail_url : _currentBase + result["thumb"],
@@ -121,6 +121,7 @@ exports.search = function(max_results, query) {
     var deferred = Q.defer();
     server_list.forEach(function(currentValue, index, array) {
         _currentBase = currentValue["hostname"] + ":" + currentValue["port"]
+        _currentIndex = index;
         currentValue.find("/library/sections", {type : "artist"}).then(
             function(directories) {
                 directories.forEach(function(_currentValue, index, array) {
