@@ -164,21 +164,6 @@ exports.fetch = function(id, download_location) {
                                                              .slice(-1);
             log(download_path);
             var write_stream = fs.createWriteStream(download_path);
-            //var request_opts = {
-            //    uri : "https://" + server["host"] + ":" + server["port"] + "/" + song_path,
-            //    headers: build_headers(),
-            //    method: "GET",
-            //    encoding: null
-            //};
-            //request(request_opts, function(err, msg, songdata) {
-            //    if(err) {
-            //        deferred.reject(err);
-            //        return;
-            //    }
-
-            //    ws.write(songdata);
-            //    deferred.resolve(download_path);
-            //});
             server.query(song_path).then(
                 function(result) {
                     write_stream.write(result);
