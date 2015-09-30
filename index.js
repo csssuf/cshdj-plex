@@ -1,3 +1,4 @@
+// vim: set foldmethod=indent:
 /*
  * A Plex plugin for CSH DJ.
  *
@@ -48,7 +49,7 @@ function build_request(_url, _headers, _method) {
 
 function format_result(result) {
     return {
-        id : _currentIndex + "/" result["ratingKey"],
+        id : _currentIndex + "/" + result["ratingKey"],
         title : result["title"],
         artist : result["grandparentTitle"],
         thumbnail_url : _currentBase + result["thumb"],
